@@ -1,8 +1,7 @@
 const PAYFLOW_LOGO_SVG = `
-<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M13 1L24 5.5V12C24 18.5 19.5 23.5 13 25C6.5 23.5 2 18.5 2 12V5.5L13 1Z" fill="#0B6E4F"/>
-  <path d="M8 13.5C8 13.5 10.5 9 13 9C16 9 15 13 18 13C20 13 21 10.5 21 10.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-</svg>`;
+  <a class="navbar-brand d-flex align-items-center gap-2" href="/index.html">
+       <img src="/logo.png"  width="100">
+      </a>`;
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard.html", icon: "⌂", label: "Dashboard" },
