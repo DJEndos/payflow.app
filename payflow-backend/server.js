@@ -15,10 +15,7 @@ connectDB();
 
 const app = express();
 
-// Only the frontend's own origin (Vercel) plus localhost for local dev can
-// call this API. Add any extra preview-deploy URLs to ALLOWED_ORIGINS as a
-// comma-separated list if you use Vercel preview deployments.
-const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5500", "http://127.0.0.1:5500"]
+const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5500", "https://payflow-app-omega.vercel.app"]
   .concat((process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean));
 
 app.use(
