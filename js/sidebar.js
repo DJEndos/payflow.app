@@ -27,7 +27,7 @@ function renderSidebar(activePage) {
   shell.className = "app-shell";
   shell.innerHTML = `
     <aside class="sidebar">
-      <div class="sidebar-logo">${PAYFLOW_LOGO_SVG} PayFlow</div>
+      <div class="sidebar-logo">${PAYFLOW_LOGO_SVG}</div>
       <nav class="sidebar-nav">${linksHtml}</nav>
       <div class="sidebar-footer">
         <a href="#" onclick="logout(); return false;" class="sidebar-link">
