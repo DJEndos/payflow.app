@@ -156,6 +156,9 @@ async function transfer(req, res) {
     }
 
     const sender = await User.findById(req.user._id);
+    if (!sender.pin) {
+      return res.status(400).json({ success: false, message: "Set a transaction PIN before sending money" });
+    }
     if (!(await sender.comparePin(pin))) {
       return res.status(401).json({ success: false, message: "Incorrect transaction PIN" });
     }

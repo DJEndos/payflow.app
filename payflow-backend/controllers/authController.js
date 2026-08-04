@@ -169,6 +169,10 @@ function logout(req, res) {
 // GET /api/user/me -> the frontend calls this on every protected page load
 // to get the logged-in user's profile and current balance.
 async function getMe(req, res) {
+  // req.user has password/pin excluded by the auth middleware (on purpose —
+  // we never want the hash in a response). Check pin existence separately.
+  const hasPin = !!(await User.exists({ _id: req.user._id, pin: { $ne: null } }));
+
   return res.json({
     success: true,
     data: {
@@ -178,8 +182,45 @@ async function getMe(req, res) {
       businessName: req.user.businessName,
       accountNumber: req.user.accountNumber,
       walletBalance: req.user.walletBalance,
+      hasPin,
     },
   });
 }
 
-module.exports = { register, login, logout, forgotPassword, resetPassword, getMe };
+// POST /api/user/set-pin  { newPin, password, currentPin? }
+// Sets the transaction PIN for the first time, or changes it. Changing an
+// existing PIN requires the current one; setting it for the first time
+// requires the account password instead, so it can't be set by anyone who
+// merely has a stolen/leftover logged-in session.
+async function setTransactionPin(req, res) {
+  try {
+    const { newPin, password, currentPin } = req.body;
+
+    if (!newPin || !/^\d{4}$/.test(newPin)) {
+      return res.status(400).json({ success: false, message: "PIN must be exactly 4 digits" });
+    }
+
+    const user = await User.findById(req.user._id);
+    const hadPinBefore = !!user.pin;
+
+    if (user.pin) {
+      if (!currentPin || !(await user.comparePin(currentPin))) {
+        return res.status(401).json({ success: false, message: "Current PIN is incorrect" });
+      }
+    } else {
+      if (!password || !(await user.comparePassword(password))) {
+        return res.status(401).json({ success: false, message: "Incorrect password" });
+      }
+    }
+
+    await user.setPin(newPin);
+    await user.save();
+
+    return res.json({ success: true, message: hadPinBefore ? "PIN updated" : "Transaction PIN set" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+module.exports = { register, login, logout, forgotPassword, resetPassword, getMe, setTransactionPin };
