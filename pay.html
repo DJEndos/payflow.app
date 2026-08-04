@@ -38,6 +38,7 @@
   </div>
 
   <script src="/js/config.js"></script>
+  <script src="/js/ui.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const accountNumber = params.get("account");
@@ -66,21 +67,24 @@
     document.getElementById("payForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target));
+      const button = e.target.querySelector("button");
       alertBox.classList.add("d-none");
 
-      const res = await fetch(`${API_BASE_URL}/api/wallet/pay/${accountNumber}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
+      await withButtonLoading(button, "Starting payment...", async () => {
+        const res = await fetch(`${API_BASE_URL}/api/wallet/pay/${accountNumber}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
 
-      if (!result.success) {
-        alertBox.textContent = result.message;
-        alertBox.classList.remove("d-none");
-        return;
-      }
-      window.location.href = result.data.authorization_url;
+        if (!result.success) {
+          alertBox.textContent = result.message;
+          alertBox.classList.remove("d-none");
+          return;
+        }
+        window.location.href = result.data.authorization_url;
+      });
     });
 
     loadRecipient();

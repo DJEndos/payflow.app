@@ -8,7 +8,11 @@
   <link href="/css/style.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="container py-4">
+  <div id="pageContent">
+    <h4 class="fw-bold mb-3"> <a class="navbar-brand d-flex align-items-center gap-2" href="/index.html">
+       <img src="/logo.png"  width="100">
+      </a>Wallet</h4>
+
     <div class="row g-4">
       <div class="col-md-6">
         <div class="card p-4">
@@ -19,7 +23,7 @@
               <label class="form-label">Amount (₦)</label>
               <input type="number" min="100" name="amount" class="form-control" required />
             </div>
-            <button class="btn btn-success w-100" type="submit">Fund with Paystack</button>
+            <button class="btn btn-primary w-100" type="submit">Fund with Paystack</button>
           </form>
         </div>
       </div>
@@ -40,8 +44,9 @@
             <div class="mb-3">
               <label class="form-label">Transaction PIN</label>
               <input type="password" name="pin" maxlength="4" class="form-control" required />
+              <div class="form-text">No PIN yet? <a href="/settings.html">Set one here</a>.</div>
             </div>
-            <button class="btn btn-success w-100" type="submit">Send</button>
+            <button class="btn btn-primary w-100" type="submit">Send</button>
           </form>
         </div>
       </div>
@@ -58,10 +63,11 @@
 
   <script src="/js/config.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/nav.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/sidebar.js"></script>
   <script>
     requireAuth();
-    renderNav();
+    renderSidebar("wallet");
 
     function showAlert(id, message, ok) {
       const el = document.getElementById(id);
@@ -71,34 +77,43 @@
 
     document.getElementById("fundForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const button = e.target.querySelector("button");
       const data = Object.fromEntries(new FormData(e.target));
-      const res = await fetch(`${API_BASE_URL}/api/wallet/fund/initialize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify(data),
+
+      await withButtonLoading(button, "Starting...", async () => {
+        const res = await fetch(`${API_BASE_URL}/api/wallet/fund/initialize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (result.success) {
+          window.location.href = result.data.authorization_url;
+        } else {
+          showAlert("fundAlert", result.message, false);
+        }
       });
-      const result = await res.json();
-      if (result.success) {
-        window.location.href = result.data.authorization_url;
-      } else {
-        showAlert("fundAlert", result.message, false);
-      }
     });
 
     document.getElementById("transferForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const button = e.target.querySelector("button");
       const data = Object.fromEntries(new FormData(e.target));
-      const res = await fetch(`${API_BASE_URL}/api/wallet/transfer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify(data),
+      const form = e.target;
+
+      await withButtonLoading(button, "Sending...", async () => {
+        const res = await fetch(`${API_BASE_URL}/api/wallet/transfer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        showAlert("transferAlert", result.message, result.success);
+        if (result.success) {
+          form.reset();
+          loadTransactions();
+        }
       });
-      const result = await res.json();
-      showAlert("transferAlert", result.message, result.success);
-      if (result.success) {
-        e.target.reset();
-        loadTransactions();
-      }
     });
 
     async function loadTransactions() {

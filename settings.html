@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings — PayFlow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="pageContent">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/index.html">
+       <img src="/logo.png"  width="100">
+      </a>
+    <h4 class="fw-bold mb-3">Settings</h4>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card p-4">
+          <h5 class="fw-bold mb-1" id="pinCardTitle">Set transaction PIN</h5>
+          <p class="text-muted small mb-3" id="pinCardSubtitle">
+            You'll need this 4-digit PIN every time you send money.
+          </p>
+          <div id="pinAlert" class="alert d-none"></div>
+
+          <form id="pinForm">
+            <div class="mb-3 d-none" id="currentPinGroup">
+              <label class="form-label">Current PIN</label>
+              <input type="password" name="currentPin" maxlength="4" class="form-control" />
+            </div>
+            <div class="mb-3 d-none" id="passwordGroup">
+              <label class="form-label">Account password</label>
+              <input type="password" name="password" class="form-control" />
+              <div class="form-text">Confirms it's really you, since this is the first time you're setting a PIN.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" id="newPinLabel">New 4-digit PIN</label>
+              <input type="password" name="newPin" maxlength="4" pattern="\d{4}" class="form-control" required />
+            </div>
+            <button class="btn btn-primary w-100" type="submit" id="pinSubmitBtn">Set PIN</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card p-4">
+          <h5 class="fw-bold mb-3">Your details</h5>
+          <table class="table table-borderless mb-0">
+            <tbody>
+              <tr><td class="text-muted">Full name</td><td class="fw-semibold" id="detailName">...</td></tr>
+              <tr><td class="text-muted">Business name</td><td class="fw-semibold" id="detailBusiness">...</td></tr>
+              <tr><td class="text-muted">Email</td><td class="fw-semibold" id="detailEmail">...</td></tr>
+              <tr><td class="text-muted">Phone</td><td class="fw-semibold" id="detailPhone">...</td></tr>
+              <tr><td class="text-muted">Account number</td><td class="fw-semibold mono" id="detailAccount">...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/sidebar.js"></script>
+  <script>
+    requireAuth();
+    renderSidebar("settings");
+
+    let hasPin = false;
+
+    function showAlert(message, ok) {
+      const el = document.getElementById("pinAlert");
+      el.textContent = message;
+      el.className = `alert ${ok ? "alert-success" : "alert-danger"}`;
+    }
+
+    async function loadProfile() {
+      const res = await fetch(`${API_BASE_URL}/api/user/me`, { headers: authHeaders() });
+      if (res.status === 401) return logout();
+      const result = await res.json();
+      const u = result.data;
+
+      document.getElementById("detailName").textContent = u.fullName;
+      document.getElementById("detailBusiness").textContent = u.businessName || "—";
+      document.getElementById("detailEmail").textContent = u.email;
+      document.getElementById("detailPhone").textContent = u.phone;
+      document.getElementById("detailAccount").textContent = u.accountNumber;
+
+      hasPin = u.hasPin;
+      if (hasPin) {
+        document.getElementById("pinCardTitle").textContent = "Change transaction PIN";
+        document.getElementById("pinCardSubtitle").textContent = "Enter your current PIN to set a new one.";
+        document.getElementById("currentPinGroup").classList.remove("d-none");
+        document.getElementById("currentPinGroup").querySelector("input").required = true;
+        document.getElementById("newPinLabel").textContent = "New 4-digit PIN";
+        document.getElementById("pinSubmitBtn").textContent = "Update PIN";
+      } else {
+        document.getElementById("passwordGroup").classList.remove("d-none");
+        document.getElementById("passwordGroup").querySelector("input").required = true;
+      }
+    }
+
+    document.getElementById("pinForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const button = document.getElementById("pinSubmitBtn");
+      const data = Object.fromEntries(new FormData(e.target));
+      const form = e.target;
+
+      await withButtonLoading(button, "Saving...", async () => {
+        const res = await fetch(`${API_BASE_URL}/api/user/set-pin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        showAlert(result.message, result.success);
+        if (result.success) {
+          form.reset();
+          loadProfile();
+        }
+      });
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

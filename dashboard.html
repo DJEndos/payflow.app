@@ -8,82 +8,115 @@
   <link href="/css/style.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="container py-4">
-    <div class="row g-4">
-      <!-- Wallet card -->
-      <div class="col-lg-7">
-        <div class="wallet-card">
-          <div class="d-flex justify-content-between align-items-start mb-4">
-            <div class="chip"></div>
-            <span class="wallet-card-label">PayFlow Wallet</span>
-          </div>
-          <div class="wallet-card-label mb-1">Balance</div>
-          <div class="wallet-balance mb-4" id="balance">₦...</div>
-          <div class="wallet-card-label mb-1" id="displayName">...</div>
-          <div class="wallet-account-number" id="accountNumber">...</div>
-        </div>
+  <div id="pageContent">
+    <div id="pinBanner" class="alert alert-warning d-none d-flex justify-content-between align-items-center mb-3">
+      <span>You haven't set a transaction PIN yet — you'll need one to send money.</span>
+      <a href="/settings.html" class="btn btn-sm btn-warning">Set PIN now</a>
+    </div>
 
-        <div class="row row-cols-3 g-2 mt-1">
-          <div class="col">
-            <a href="/wallet.html" class="quick-action">
-              <span class="icon">↓</span>
-              <span class="label">Fund</span>
-            </a>
-          </div>
-          <div class="col">
-            <a href="/wallet.html" class="quick-action">
-              <span class="icon">↗</span>
-              <span class="label">Send</span>
-            </a>
-          </div>
-          <div class="col">
-            <a href="/bills.html" class="quick-action">
-              <span class="icon">⚡</span>
-              <span class="label">Pay bills</span>
-            </a>
-          </div>
-        </div>
+    <div class="topbar">
+      <div>
+        <h4 class="fw-bold mb-1">👋 Welcome back, <span id="firstName">...</span></h4>
+        <p class="text-muted mb-0">Here's what's happening with your wallet today.</p>
       </div>
-
-      <!-- QR panel -->
-      <div class="col-lg-5">
-        <div class="card p-4 text-center qr-box h-100 d-flex flex-column justify-content-center">
-          <p class="fw-semibold mb-1">Scan to pay</p>
-          <p class="text-muted small mb-3" id="qrLabel">...</p>
-          <img id="qrImg" src="" alt="Your payment QR code" class="mx-auto" style="width:170px;height:170px;" />
-          <p class="text-muted small mt-3 mb-0">Customers scan this to pay you directly — no app needed on their end.</p>
+      <div class="d-flex align-items-center gap-3">
+        <a href="/wallet.html" class="btn btn-primary">Fund Wallet</a>
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar-initials" id="avatarInitials">..</div>
+          <div>
+            <div class="fw-semibold small" id="topbarName">...</div>
+            <div class="text-muted" style="font-size:0.75rem;" id="topbarSub">PayFlow user</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Ledger -->
-    <div class="ledger mt-4">
-      <div class="ledger-header p-3 px-4 d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Recent activity</span>
-        <a href="/wallet.html" class="small text-decoration-none" style="color:var(--forest)">View all</a>
+    <div class="row g-3 mb-1">
+      <div class="col-md-4">
+        <div class="stat-card stat-primary">
+          <div class="stat-label">Total Balance</div>
+          <div class="stat-value" id="statBalance">₦...</div>
+        </div>
       </div>
-      <div id="ledgerBody">
-        <div class="ledger-row text-muted">Loading...</div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Money In (this month)</div>
+          <div class="stat-value" style="color:var(--forest)" id="statIn">₦...</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-label">Money Out (this month)</div>
+          <div class="stat-value" style="color:#A83232" id="statOut">₦...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-lg-5">
+        <div class="card p-4 text-center qr-box h-100 d-flex flex-column justify-content-center">
+          <p class="fw-semibold mb-1">Scan to pay</p>
+          <p class="text-muted small mb-3" id="qrLabel">...</p>
+          <img id="qrImg" src="" alt="Your payment QR code" class="mx-auto" style="width:150px;height:150px;" />
+          <p class="text-muted small mt-3 mb-1">Your account number</p>
+          <p class="wallet-account-number" style="color:var(--ink)" id="accountNumber">...</p>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="ledger h-100">
+          <div class="ledger-header p-3 px-4 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Recent activity</span>
+            <a href="/wallet.html" class="small text-decoration-none" style="color:var(--forest)">View all</a>
+          </div>
+          <div id="ledgerBody">
+            <div class="ledger-row text-muted">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-4 mt-3">
+      <p class="fw-semibold mb-3">Quick Actions</p>
+      <div class="row row-cols-3 row-cols-md-5 g-2">
+        <div class="col"><a href="/wallet.html" class="quick-action"><span class="icon">↗</span><span class="label">Send Money</span></a></div>
+        <div class="col"><a href="/wallet.html" class="quick-action"><span class="icon">↓</span><span class="label">Fund Wallet</span></a></div>
+        <div class="col"><a href="/bills.html" class="quick-action"><span class="icon">📶</span><span class="label">Buy Airtime</span></a></div>
+        <div class="col"><a href="/bills.html" class="quick-action"><span class="icon">🌐</span><span class="label">Buy Data</span></a></div>
+        <div class="col"><a href="/bills.html" class="quick-action"><span class="icon">⚡</span><span class="label">Electricity</span></a></div>
       </div>
     </div>
   </div>
 
   <script src="/js/config.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/nav.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/sidebar.js"></script>
   <script>
     requireAuth();
-    renderNav();
+    renderSidebar("dashboard");
+
+    function initials(name) {
+      if (!name) return "?";
+      const parts = name.trim().split(/\s+/);
+      return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+    }
 
     async function loadProfile() {
       const res = await fetch(`${API_BASE_URL}/api/user/me`, { headers: authHeaders() });
       if (res.status === 401) return logout();
       const result = await res.json();
       const u = result.data;
-      document.getElementById("balance").textContent = `₦${u.walletBalance.toLocaleString()}`;
-      document.getElementById("displayName").textContent = u.businessName || u.fullName;
-      document.getElementById("accountNumber").textContent = u.accountNumber;
+
+      document.getElementById("firstName").textContent = u.fullName.split(" ")[0];
+      document.getElementById("topbarName").textContent = u.fullName;
+      document.getElementById("topbarSub").textContent = u.businessName || "PayFlow user";
+      document.getElementById("avatarInitials").textContent = initials(u.fullName);
+      document.getElementById("statBalance").textContent = `₦${u.walletBalance.toLocaleString()}`;
       document.getElementById("qrLabel").textContent = u.businessName || u.fullName;
+      document.getElementById("accountNumber").textContent = u.accountNumber;
+
+      if (!u.hasPin) document.getElementById("pinBanner").classList.remove("d-none");
     }
 
     async function loadQr() {
@@ -96,15 +129,31 @@
       const res = await fetch(`${API_BASE_URL}/api/wallet/transactions`, { headers: authHeaders() });
       const result = await res.json();
       const body = document.getElementById("ledgerBody");
+
       if (!result.success || !result.data.length) {
         body.innerHTML = '<div class="ledger-row text-muted">No activity yet — fund your wallet or share your QR code to get started.</div>';
+        document.getElementById("statIn").textContent = "₦0";
+        document.getElementById("statOut").textContent = "₦0";
         return;
       }
-      const inbound = ["fund", "receive"];
+
+      const inboundTypes = ["fund", "receive"];
+      const now = new Date();
+      const thisMonth = (d) => new Date(d).getMonth() === now.getMonth() && new Date(d).getFullYear() === now.getFullYear();
+
+      let moneyIn = 0, moneyOut = 0;
+      result.data.forEach((t) => {
+        if (t.status !== "success" || !thisMonth(t.createdAt)) return;
+        if (inboundTypes.includes(t.type)) moneyIn += t.amount;
+        else moneyOut += t.amount;
+      });
+      document.getElementById("statIn").textContent = `₦${moneyIn.toLocaleString()}`;
+      document.getElementById("statOut").textContent = `₦${moneyOut.toLocaleString()}`;
+
       body.innerHTML = result.data
         .slice(0, 6)
         .map((t) => {
-          const isIn = inbound.includes(t.type);
+          const isIn = inboundTypes.includes(t.type);
           return `<div class="ledger-row">
             <div>
               <div class="tx-type">${t.type}</div>
