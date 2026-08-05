@@ -15,6 +15,9 @@ connectDB();
 
 const app = express();
 
+
+app.set("trust proxy", 1);
+
 const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5500", "https://payflow-app-omega.vercel.app"]
   .concat((process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean));
 
@@ -29,8 +32,6 @@ app.use(
 
 app.use(morgan("dev"));
 
-// Webhook must read the raw JSON body BEFORE express.json() parses it away,
-// so Paystack's signature can be verified against the EXACT bytes sent.
 app.post(
   "/api/wallet/fund/webhook",
   express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }),
