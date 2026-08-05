@@ -42,7 +42,7 @@ function renderSidebar(activePage) {
     <div class="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
 
     <aside class="sidebar">
-      <div class="sidebar-logo sidebar-logo-desktop">${PAYFLOW_LOGO_SVG} PayFlow</div>
+      <div class="sidebar-logo sidebar-logo-desktop">${PAYFLOW_LOGO_SVG}</div>
       <nav class="sidebar-nav" onclick="toggleSidebar(false)">${linksHtml}</nav>
       <div class="sidebar-footer">
         <a href="#" onclick="logout(); return false;" class="sidebar-link">
