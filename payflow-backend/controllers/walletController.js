@@ -146,10 +146,12 @@ async function paystackWebhook(req, res) {
 }
 
 // POST /api/wallet/transfer -> send money to another PayFlow user by account number
+// POST /api/wallet/transfer -> send money to another PayFlow user by account number
 async function transfer(req, res) {
   const session = await mongoose.startSession();
   try {
-    const { toAccountNumber, amount, pin } = req.body;
+    const { toAccountNumber, pin } = req.body;
+    const amount = Number(req.body.amount);
 
     if (!toAccountNumber || !amount || amount <= 0) {
       return res.status(400).json({ success: false, message: "Recipient and valid amount required" });
@@ -185,6 +187,8 @@ async function transfer(req, res) {
     recipient.walletBalance += amount;
     await recipient.save({ session });
 
+    // ordered: true is required by Mongoose whenever create() is called with
+    // both an array of documents AND a session — omitting it throws every time.
     await Transaction.create(
       [
         {
@@ -204,7 +208,7 @@ async function transfer(req, res) {
           counterpartyAccountNumber: sender.accountNumber,
         },
       ],
-      { session }
+      { session, ordered: true }
     );
 
     await session.commitTransaction();
@@ -218,7 +222,6 @@ async function transfer(req, res) {
     session.endSession();
   }
 }
-
 // GET /api/wallet/transactions
 async function getTransactions(req, res) {
   const transactions = await Transaction.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50);
