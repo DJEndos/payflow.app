@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verifying BVN — PayFlow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container d-flex align-items-center justify-content-center text-center" style="min-height:100vh;">
+    <div class="card p-5 col-md-5 w-100">
+      <div class="fs-1 mb-3" id="statusIcon">⏳</div>
+      <h5 class="fw-bold" id="statusTitle">Confirming your BVN...</h5>
+      <p class="text-muted" id="statusText">This usually takes a few seconds.</p>
+      <a href="/profile.html" class="btn btn-primary mt-2">Back to profile</a>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    requireAuth();
+    let attempts = 0;
+
+    async function checkStatus() {
+      attempts++;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/bvn-status`, { headers: authHeaders() });
+        if (res.status === 401) return logout();
+        const result = await res.json();
+
+        if (result.success && result.data.status === "COMPLETED") {
+          document.getElementById("statusIcon").textContent = "✅";
+          document.getElementById("statusTitle").textContent = "BVN verified!";
+          document.getElementById("statusText").innerHTML = "Your identity has been confirmed.";
+          return;
+        }
+
+        if (result.success && (result.data.status === "FAILED" || result.data.status === "CANCELLED")) {
+          document.getElementById("statusIcon").textContent = "❌";
+          document.getElementById("statusTitle").textContent = "Verification not completed";
+          document.getElementById("statusText").innerHTML = "You can try again from your profile.";
+          return;
+        }
+
+        if (attempts < 15) {
+          setTimeout(checkStatus, 2000);
+        } else {
+          document.getElementById("statusTitle").textContent = "Still confirming...";
+          document.getElementById("statusText").innerHTML =
+            "This is taking longer than usual. Check your profile page in a moment.";
+        }
+      } catch (e) {
+        if (attempts < 15) setTimeout(checkStatus, 2000);
+      }
+    }
+
+    checkStatus();
+  </script>
+</body>
+</html>

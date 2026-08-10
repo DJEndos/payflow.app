@@ -250,16 +250,29 @@
       const data = Object.fromEntries(new FormData(e.target));
       const alertBox = document.getElementById("bvnAlert");
 
-      await withButtonLoading(button, "Verifying...", async () => {
+      await withButtonLoading(button, "Starting verification...", async () => {
         const res = await fetch(`${API_BASE_URL}/api/user/verify-bvn`, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(data),
         });
         const result = await res.json();
-        alertBox.textContent = result.message;
-        alertBox.className = `alert ${result.success ? "alert-success" : "alert-danger"}`;
-        if (result.success) loadProfile();
+
+        if (!result.success) {
+          alertBox.textContent = result.message;
+          alertBox.className = "alert alert-danger";
+          return;
+        }
+
+        // BVN verification isn't synchronous - the customer has to confirm
+        // consent on NIBSS's own portal first. Send them there now.
+        if (result.data?.redirectUrl) {
+          window.location.href = result.data.redirectUrl;
+        } else {
+          // Some accounts/cases complete without a redirect step - go straight
+          // to the callback page to check status.
+          window.location.href = "/bvn-callback.html";
+        }
       });
     });
 
