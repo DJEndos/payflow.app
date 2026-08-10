@@ -14,43 +14,6 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
-    // BVN verification: we deliberately never persist the raw BVN. Only a
-    // masked reference plus the verified name/DOB the vendor returned.
-    bvnVerified: { type: Boolean, default: false },
-    bvnLast4: { type: String, default: null },
-    bvnVerifiedName: { type: String, default: null },
-    bvnDateOfBirth: { type: String, default: null },
-
-    // Required for NEW registrations (enforced in the register() controller,
-    // not here) - but NOT required at the schema level, because existing
-    // users registered before this feature don't have these fields, and a
-    // schema-level `required: true` would throw a ValidationError the next
-    // time ANY .save() touches their document (setting a PIN, sending a
-    // transfer, buying a bill - anything). Existing users see a "complete
-    // your profile" prompt instead of getting silently locked out.
-    dateOfBirth: { type: Date, default: null },
-    // NIN itself is sensitive too, but unlike BVN it's commonly required to be
-    // shown back to the user (e.g. on printed KYC forms), so we store it
-    // encrypted-at-rest by MongoDB Atlas default disk encryption rather than
-    // masking it outright. Never log it or return it in API responses.
-    nin: { type: String, trim: true, default: null },
-    ninVerified: { type: Boolean, default: false },
-
-    kycStatus: {
-      type: String,
-      enum: ["unverified", "pending", "verified", "rejected"],
-      default: "unverified",
-    },
-    kycDocuments: [
-      {
-        type: { type: String }, // e.g. "government_id", "proof_of_address"
-        url: String,
-        uploadedAt: { type: Date, default: Date.now },
-      },
-    ],
-    kycRejectionReason: { type: String, default: null },
-
-    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
