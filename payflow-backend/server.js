@@ -9,16 +9,24 @@ const authRoutes = require("./routes/authRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const billRoutes = require("./routes/billRoutes");
 const userRoutes = require("./routes/userRoutes");
+const kycRoutes = require("./routes/kycRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const { paystackWebhook } = require("./controllers/walletController");
 
 connectDB();
 
 const app = express();
 
-
+// Render (and most hosts) sit behind a reverse proxy, so Express needs to
+// trust the X-Forwarded-For header to correctly identify each client's real
+// IP — without this, express-rate-limit can't tell users apart reliably.
 app.set("trust proxy", 1);
 
-const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5500", "https://payflow-app-omega.vercel.app"]
+// Only the frontend's own origin (Vercel) plus localhost for local dev can
+// call this API. Add any extra preview-deploy URLs to ALLOWED_ORIGINS as a
+// comma-separated list if you use Vercel preview deployments.
+const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5500", "http://127.0.0.1:5500"]
   .concat((process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean));
 
 app.use(
@@ -32,6 +40,8 @@ app.use(
 
 app.use(morgan("dev"));
 
+// Webhook must read the raw JSON body BEFORE express.json() parses it away,
+// so Paystack's signature can be verified against the EXACT bytes sent.
 app.post(
   "/api/wallet/fund/webhook",
   express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }),
@@ -48,6 +58,9 @@ app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/kyc", kycRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => res.json({ status: "PayFlow API running" }));
 app.use((req, res) => res.status(404).json({ success: false, message: "Not found" }));

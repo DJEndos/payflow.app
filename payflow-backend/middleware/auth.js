@@ -21,4 +21,29 @@ async function protect(req, res, next) {
   }
 }
 
-module.exports = { protect };
+// Chain AFTER protect on any admin-only route. protect already attaches
+// req.user, so this just checks the flag — it never trusts anything the
+// client sends, only what's in the database for the authenticated user.
+function adminOnly(req, res, next) {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ success: false, message: "Admin access required" });
+  }
+  next();
+}
+
+// Chain AFTER protect on any route that moves money OUT of the wallet
+// (transfers, bank transfers, bill payments). Users who registered before
+// DOB/NIN were required can still log in, view their balance, receive money,
+// and complete their profile — they just can't send money out until they do.
+function requireCompleteProfile(req, res, next) {
+  if (!req.user.dateOfBirth || !req.user.nin) {
+    return res.status(403).json({
+      success: false,
+      message: "Please complete your profile (date of birth and NIN) before sending money.",
+      code: "PROFILE_INCOMPLETE",
+    });
+  }
+  next();
+}
+
+module.exports = { protect, adminOnly, requireCompleteProfile };

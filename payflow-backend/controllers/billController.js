@@ -7,7 +7,12 @@ const { validateCustomer, payBill } = require("../utils/flutterwave");
  * Shared helper: debit wallet, call Flutterwave, record transaction.
  * If Flutterwave fails, the wallet debit is rolled back.
  */
-async function processBillPayment({ user, type, amount, customer, biller_name, meta = {} }) {
+async function processBillPayment({ user, type, amount: rawAmount, customer, biller_name, meta = {} }) {
+  const amount = Number(rawAmount);
+  if (!amount || amount <= 0) {
+    throw Object.assign(new Error("Enter a valid amount"), { status: 400 });
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -55,6 +60,11 @@ async function processBillPayment({ user, type, amount, customer, biller_name, m
 
       return { success: result.status === "successful", reference, result };
     } catch (flwErr) {
+      // This was previously swallowed entirely — logging it is what actually
+      // lets us see WHY Flutterwave rejected the request (wrong key, wrong
+      // biller code, insufficient test balance, etc.) instead of guessing.
+      console.error("Flutterwave bill payment failed:", flwErr.response?.data || flwErr.message || flwErr);
+
       // Refund on API failure
       await User.findByIdAndUpdate(user._id, { $inc: { walletBalance: amount } });
       await Transaction.findOneAndUpdate({ reference }, { status: "failed" });

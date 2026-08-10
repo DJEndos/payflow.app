@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
 const { sendResetPasswordEmail } = require("../utils/email");
+const { verifyBvn: verifyBvnWithVendor } = require("../utils/bvn");
+const { verifyNin } = require("../utils/nin");
 
 function signToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -9,13 +11,53 @@ function signToken(userId) {
   });
 }
 
+function calculateAge(dob) {
+  const diff = Date.now() - new Date(dob).getTime();
+  return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+}
+
+/**
+ * Validates DOB (18+) and NIN format, then verifies the NIN against NIMC's
+ * database via the vendor. Fails OPEN on vendor downtime (registration/profile
+ * completion proceeds as unverified) but fails CLOSED if the vendor responds
+ * and says the NIN is genuinely invalid/not found.
+ * Returns { ok: true, ninVerified } or { ok: false, status, message }.
+ */
+async function validateAndVerifyIdentity({ dateOfBirth, nin, fullName }) {
+  if (!dateOfBirth || !nin) {
+    return { ok: false, status: 400, message: "Date of birth and NIN are required" };
+  }
+  if (!/^\d{11}$/.test(nin)) {
+    return { ok: false, status: 400, message: "NIN must be exactly 11 digits" };
+  }
+  if (isNaN(new Date(dateOfBirth).getTime()) || calculateAge(dateOfBirth) < 18) {
+    return { ok: false, status: 400, message: "You must be at least 18 years old" };
+  }
+
+  let ninVerified = false;
+  const [firstName, ...lastNameParts] = fullName.trim().split(" ");
+  const lastName = lastNameParts.join(" ");
+
+  try {
+    const result = await verifyNin({ nin, firstName, lastName, dateOfBirth });
+    if (result.status !== "found") {
+      return { ok: false, status: 400, message: "We couldn't verify this NIN. Please check the number and try again." };
+    }
+    ninVerified = true;
+  } catch (vendorErr) {
+    console.error("NIN verification vendor error (failing open):", vendorErr.response?.data || vendorErr.message);
+  }
+
+  return { ok: true, ninVerified };
+}
+
 // POST /api/auth/register
 async function register(req, res) {
   try {
-    const { fullName, email, phone, password, businessName } = req.body;
+    const { fullName, email, phone, password, businessName, dateOfBirth, nin } = req.body;
 
-    if (!fullName || !email || !phone || !password) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+    if (!fullName || !email || !phone || !password || !dateOfBirth || !nin) {
+      return res.status(400).json({ success: false, message: "All fields are required, including date of birth and NIN" });
     }
 
     // Normalize to 11-digit local format (e.g. 08012345678), whether the
@@ -26,9 +68,14 @@ async function register(req, res) {
       return res.status(400).json({ success: false, message: "Enter a valid Nigerian phone number" });
     }
 
-    const existing = await User.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+    const existing = await User.findOne({ $or: [{ email }, { phone: normalizedPhone }, { nin }] });
     if (existing) {
-      return res.status(409).json({ success: false, message: "Email or phone already registered" });
+      return res.status(409).json({ success: false, message: "Email, phone, or NIN already registered" });
+    }
+
+    const identity = await validateAndVerifyIdentity({ dateOfBirth, nin, fullName });
+    if (!identity.ok) {
+      return res.status(identity.status).json({ success: false, message: identity.message });
     }
 
     const user = await User.create({
@@ -37,6 +84,9 @@ async function register(req, res) {
       phone: normalizedPhone,
       password,
       businessName,
+      dateOfBirth,
+      nin,
+      ninVerified: identity.ninVerified,
       accountNumber: normalizedPhone,
     });
 
@@ -183,8 +233,80 @@ async function getMe(req, res) {
       accountNumber: req.user.accountNumber,
       walletBalance: req.user.walletBalance,
       hasPin,
+      dateOfBirth: req.user.dateOfBirth,
+      ninVerified: req.user.ninVerified,
+      bvnVerified: req.user.bvnVerified,
+      bvnLast4: req.user.bvnLast4,
+      bvnVerifiedName: req.user.bvnVerifiedName,
+      kycStatus: req.user.kycStatus,
+      kycRejectionReason: req.user.kycRejectionReason,
+      kycDocuments: req.user.kycDocuments,
+      isAdmin: req.user.isAdmin,
     },
   });
+}
+
+// PATCH /api/user/profile  { businessName }
+async function updateProfile(req, res) {
+  try {
+    const { businessName } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { businessName },
+      { new: true }
+    );
+    return res.json({ success: true, message: "Profile updated", data: { businessName: user.businessName } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Could not update profile" });
+  }
+}
+
+// POST /api/user/verify-bvn  { bvn }
+// Verifies the BVN against the vendor and stores ONLY a masked reference —
+// never the raw 11-digit BVN itself. Uses the DOB already captured at
+// registration rather than asking the user to type it again.
+async function verifyBvn(req, res) {
+  try {
+    const { bvn } = req.body;
+
+    if (!bvn || !/^\d{11}$/.test(bvn)) {
+      return res.status(400).json({ success: false, message: "BVN must be exactly 11 digits" });
+    }
+
+    const [firstName, ...rest] = req.user.fullName.trim().split(/\s+/);
+    const lastName = rest[rest.length - 1];
+
+    const result = await verifyBvnWithVendor({ bvn, firstName, lastName, dateOfBirth: req.user.dateOfBirth });
+
+    if (result.status !== "found") {
+      return res.status(400).json({ success: false, message: "BVN could not be verified" });
+    }
+
+    // If we asked for a name/DOB match and it failed, don't mark verified —
+    // this stops someone entering a BVN that isn't theirs.
+    if (result.dataValidation === false) {
+      return res.status(400).json({
+        success: false,
+        message: "The name or date of birth provided doesn't match this BVN's records",
+      });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      bvnVerified: true,
+      bvnLast4: bvn.slice(-4),
+      bvnVerifiedName: `${result.firstName || ""} ${result.lastName || ""}`.trim(),
+      bvnDateOfBirth: result.dateOfBirth || null,
+      // Both ID checks done -> move into pending admin review. Full "verified"
+      // status still needs a human to check the uploaded KYC documents too.
+      ...(req.user.kycStatus === "unverified" && { kycStatus: "pending" }),
+    });
+
+    return res.json({ success: true, message: "BVN verified successfully" });
+  } catch (err) {
+    console.error("BVN verification failed:", err.response?.data || err.message || err);
+    return res.status(502).json({ success: false, message: "Could not reach the verification service. Try again shortly." });
+  }
 }
 
 // POST /api/user/set-pin  { newPin, password, currentPin? }
@@ -223,4 +345,51 @@ async function setTransactionPin(req, res) {
   }
 }
 
-module.exports = { register, login, logout, forgotPassword, resetPassword, getMe, setTransactionPin };
+// POST /api/user/complete-profile  { dateOfBirth, nin }
+// For users who registered BEFORE dateOfBirth/NIN were required. Uses the
+// exact same validation/verification path as new registrations.
+async function completeProfile(req, res) {
+  try {
+    const { dateOfBirth, nin } = req.body;
+
+    if (req.user.dateOfBirth && req.user.nin) {
+      return res.status(400).json({ success: false, message: "Your profile is already complete" });
+    }
+
+    // NIN uniqueness check - a legacy user's NIN could theoretically collide
+    // with someone who registered after them under the new required flow.
+    const ninTaken = await User.findOne({ nin, _id: { $ne: req.user._id } });
+    if (ninTaken) {
+      return res.status(409).json({ success: false, message: "This NIN is already registered to another account" });
+    }
+
+    const identity = await validateAndVerifyIdentity({ dateOfBirth, nin, fullName: req.user.fullName });
+    if (!identity.ok) {
+      return res.status(identity.status).json({ success: false, message: identity.message });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      dateOfBirth,
+      nin,
+      ninVerified: identity.ninVerified,
+    });
+
+    return res.json({ success: true, message: "Profile completed" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  logout,
+  forgotPassword,
+  resetPassword,
+  getMe,
+  setTransactionPin,
+  updateProfile,
+  verifyBvn,
+  completeProfile,
+};

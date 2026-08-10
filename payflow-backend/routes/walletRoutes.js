@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/auth");
+const { protect, requireCompleteProfile } = require("../middleware/auth");
 const {
   getQrCode,
   getPublicAccount,
@@ -9,6 +9,9 @@ const {
   transfer,
   getTransactions,
   getFundingStatus,
+  getBanks,
+  resolveBankAccount,
+  transferToBank,
 } = require("../controllers/walletController");
 
 // Public — no auth. This is what the QR code page hits.
@@ -20,8 +23,12 @@ router.get("/account/:accountNumber", getPublicAccount);
 router.get("/fund/status/:reference", getFundingStatus);
 
 router.get("/qr-code", protect, getQrCode);
-router.post("/fund/initialize", protect, initializeFunding);
-router.post("/transfer", protect, transfer);
+router.post("/fund/initialize", protect, initializeFunding); // funding IN is always allowed
+router.post("/transfer", protect, requireCompleteProfile, transfer); // sending OUT requires complete profile
 router.get("/transactions", protect, getTransactions);
+
+router.get("/banks", protect, getBanks); // just browsing bank list - fine either way
+router.get("/resolve-account", protect, resolveBankAccount); // just a name lookup, no money moves
+router.post("/transfer-to-bank", protect, requireCompleteProfile, transferToBank);
 
 module.exports = router;

@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/auth");
+const { protect, requireCompleteProfile } = require("../middleware/auth");
 const { buyAirtime, buyData, validateMeter, payElectricity } = require("../controllers/billController");
 
-router.post("/airtime", protect, buyAirtime);
-router.post("/data", protect, buyData);
-router.get("/electricity/validate", protect, validateMeter);
-router.post("/electricity/pay", protect, payElectricity);
+router.post("/airtime", protect, requireCompleteProfile, buyAirtime);
+router.post("/data", protect, requireCompleteProfile, buyData);
+router.get("/electricity/validate", protect, validateMeter); // just a lookup, no money moves
+router.post("/electricity/pay", protect, requireCompleteProfile, payElectricity);
 
 module.exports = router;

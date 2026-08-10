@@ -3,7 +3,14 @@ const QRCode = require("qrcode");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
-const { initializeTransaction, verifyTransaction } = require("../utils/paystack");
+const {
+  initializeTransaction,
+  verifyTransaction,
+  listBanks,
+  resolveAccountNumber,
+  createTransferRecipient,
+  initiateTransfer,
+} = require("../utils/paystack");
 
 // GET /api/wallet/qr-code -> returns a base64 QR image encoding this user's payment link
 async function getQrCode(req, res) {
@@ -138,6 +145,24 @@ async function paystackWebhook(req, res) {
       await finalizeTransaction(event.data.reference);
     }
 
+    if (event.event === "transfer.success" || event.event === "transfer.failed" || event.event === "transfer.reversed") {
+      const reference = event.data.reference;
+      const finalStatus = event.event === "transfer.success" ? "success" : "failed";
+
+      const transaction = await Transaction.findOne({ reference });
+      if (transaction && transaction.status !== finalStatus) {
+        transaction.status = finalStatus;
+        transaction.meta = { ...transaction.meta, paystackFinalEvent: event.data };
+        await transaction.save();
+
+        // If the transfer ultimately failed/reversed after we'd already
+        // marked it success optimistically, refund the wallet now.
+        if (finalStatus === "failed") {
+          await User.findByIdAndUpdate(transaction.user, { $inc: { walletBalance: transaction.amount } });
+        }
+      }
+    }
+
     return res.sendStatus(200);
   } catch (err) {
     console.error(err);
@@ -145,7 +170,6 @@ async function paystackWebhook(req, res) {
   }
 }
 
-// POST /api/wallet/transfer -> send money to another PayFlow user by account number
 // POST /api/wallet/transfer -> send money to another PayFlow user by account number
 async function transfer(req, res) {
   const session = await mongoose.startSession();
@@ -222,6 +246,7 @@ async function transfer(req, res) {
     session.endSession();
   }
 }
+
 // GET /api/wallet/transactions
 async function getTransactions(req, res) {
   const transactions = await Transaction.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50);
@@ -270,6 +295,120 @@ async function payViaQr(req, res) {
   }
 }
 
+// GET /api/wallet/banks -> list of Nigerian banks for the "send to bank" dropdown
+async function getBanks(req, res) {
+  try {
+    const banks = await listBanks();
+    return res.json({ success: true, data: banks });
+  } catch (err) {
+    console.error("Could not fetch bank list:", err.response?.data || err.message);
+    return res.status(502).json({ success: false, message: "Could not load bank list" });
+  }
+}
+
+// GET /api/wallet/resolve-account?accountNumber=&bankCode= -> confirms the account
+// holder's name BEFORE the user commits to sending money to it.
+async function resolveBankAccount(req, res) {
+  try {
+    const { accountNumber, bankCode } = req.query;
+    if (!accountNumber || !bankCode) {
+      return res.status(400).json({ success: false, message: "Account number and bank are required" });
+    }
+    const data = await resolveAccountNumber(accountNumber, bankCode);
+    return res.json({ success: true, data });
+  } catch (err) {
+    console.error("Account resolution failed:", err.response?.data || err.message);
+    return res.status(400).json({ success: false, message: "Could not verify this account number" });
+  }
+}
+
+// POST /api/wallet/transfer-to-bank  { accountNumber, bankCode, accountName, amount, pin }
+// Sends money from the wallet to an external Nigerian bank account via Paystack.
+async function transferToBank(req, res) {
+  const session = await mongoose.startSession();
+  try {
+    const { accountNumber, bankCode, accountName, pin } = req.body;
+    const amount = Number(req.body.amount);
+
+    if (!accountNumber || !bankCode || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Bank details and a valid amount are required" });
+    }
+
+    const sender = await User.findById(req.user._id);
+    if (!sender.pin) {
+      return res.status(400).json({ success: false, message: "Set a transaction PIN before sending money" });
+    }
+    if (!(await sender.comparePin(pin))) {
+      return res.status(401).json({ success: false, message: "Incorrect transaction PIN" });
+    }
+    if (sender.walletBalance < amount) {
+      return res.status(400).json({ success: false, message: "Insufficient balance" });
+    }
+
+    const reference = `BTR-${sender._id}-${Date.now()}`;
+
+    // Debit the wallet and record a pending transaction FIRST, inside a DB
+    // transaction, before we ever call Paystack — if Paystack's call fails
+    // afterward, we refund explicitly (see catch block below).
+    session.startTransaction();
+    sender.walletBalance -= amount;
+    await sender.save({ session });
+
+    await Transaction.create(
+      [
+        {
+          user: sender._id,
+          type: "bank_transfer",
+          amount,
+          reference,
+          status: "pending",
+          meta: { accountNumber, bankCode, accountName },
+        },
+      ],
+      { session }
+    );
+    await session.commitTransaction();
+    session.endSession();
+
+    try {
+      const recipient = await createTransferRecipient({
+        name: accountName,
+        account_number: accountNumber,
+        bank_code: bankCode,
+      });
+
+      const transfer = await initiateTransfer({
+        amount,
+        recipient_code: recipient.recipient_code,
+        reason: "PayFlow bank transfer",
+        reference,
+      });
+
+      // Paystack transfers are often asynchronous — "success" here means it
+      // was ACCEPTED, not necessarily settled. Final status arrives via the
+      // transfer.success / transfer.failed webhook, handled below.
+      await Transaction.findOneAndUpdate(
+        { reference },
+        { status: transfer.status === "success" ? "success" : "pending", "meta.paystackTransfer": transfer }
+      );
+
+      return res.json({ success: true, message: "Transfer initiated", data: { reference, status: transfer.status } });
+    } catch (transferErr) {
+      console.error("Bank transfer failed:", transferErr.response?.data || transferErr.message);
+      // Refund since the money never actually left for the bank
+      await User.findByIdAndUpdate(sender._id, { $inc: { walletBalance: amount } });
+      await Transaction.findOneAndUpdate({ reference }, { status: "failed" });
+      return res.status(502).json({ success: false, message: "Bank transfer failed. You have been refunded." });
+    }
+  } catch (err) {
+    if (session.inTransaction()) await session.abortTransaction();
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Transfer failed" });
+  } finally {
+    session.endSession();
+  }
+}
+
 module.exports = {
   getQrCode,
   getPublicAccount,
@@ -279,4 +418,7 @@ module.exports = {
   getFundingStatus,
   transfer,
   getTransactions,
+  getBanks,
+  resolveBankAccount,
+  transferToBank,
 };
