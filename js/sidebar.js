@@ -40,7 +40,7 @@ function renderSidebar(activePage) {
       <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
-      <div class="sidebar-logo">${PAYFLOW_LOGO_SVG} PayFlow</div>
+      <div class="sidebar-logo">${PAYFLOW_LOGO_SVG}</div>
     </div>
 
     <div class="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
