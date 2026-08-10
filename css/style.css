@@ -145,6 +145,7 @@ h5,
   text-align: center;
   text-decoration: none;
   color: var(--ink);
+  border: 1px solid var(--forest-dark);
   display: block;
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
@@ -156,9 +157,11 @@ h5,
 }
 
 .quick-action .icon {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   display: block;
   margin-bottom: 6px;
+  color: var(--forest);
+
 }
 
 .quick-action .label {
