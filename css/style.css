@@ -13,10 +13,11 @@ a{
   --paper: #F7F5EF;
   --line: #D8D2C4;
   --muted: #6B7A72;
+  --white: #fff;
 }
 
 body {
-  background: var(--paper);
+  background: var(--white);
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--ink);
   overflow-x: hidden;
@@ -997,13 +998,13 @@ h5,
   padding: 10px 4px 8px;
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: 0.70rem;
+  font-weight: 700;
   transition: color 0.15s ease;
 }
 
 .footer-nav-link .footer-nav-icon {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .footer-nav-link.active {
@@ -1013,4 +1014,8 @@ h5,
 /* Push page content up so the fixed footer never overlaps it */
 .has-footer-nav .main-content {
   padding-bottom: 76px;
+}
+
+.nav-link{
+  color: var(--forest);
 }
