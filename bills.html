@@ -113,9 +113,11 @@
   <script src="/js/auth.js"></script>
   <script src="/js/ui.js"></script>
   <script src="/js/sidebar.js"></script>
+  <script src="/js/footer-nav.js"></script>
   <script>
     requireAuth();
     renderSidebar("bills");
+    renderFooterNav("bills");
 
     document.querySelectorAll("#billTabs button").forEach((btn) => {
       btn.addEventListener("click", () => {

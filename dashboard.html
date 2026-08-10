@@ -14,6 +14,11 @@
       <a href="/settings.html" class="btn btn-sm btn-warning">Set PIN now</a>
     </div>
 
+    <div id="profileIncompleteBanner" class="alert alert-warning d-none d-flex justify-content-between align-items-center mb-3">
+      <span>Your profile is missing required information (date of birth / NIN) — please complete it.</span>
+      <a href="/profile.html" class="btn btn-sm btn-warning">Complete profile</a>
+    </div>
+
     <div class="topbar">
       <div>
         <h4 class="fw-bold mb-1">👋 Welcome back, <span id="firstName">...</span></h4>
@@ -21,13 +26,14 @@
       </div>
       <div class="d-flex align-items-center gap-3">
         <a href="/wallet.html" class="btn btn-primary">Fund Wallet</a>
-        <div class="d-flex align-items-center gap-2">
+        <div id="notificationBellSlot"></div>
+        <a href="/profile.html" class="d-flex align-items-center gap-2 text-decoration-none text-reset">
           <div class="avatar-initials" id="avatarInitials">..</div>
           <div>
             <div class="fw-semibold small" id="topbarName">...</div>
             <div class="text-muted" style="font-size:0.75rem;" id="topbarSub">PayFlow user</div>
           </div>
-        </div>
+        </a>
       </div>
     </div>
 
@@ -92,9 +98,13 @@
   <script src="/js/auth.js"></script>
   <script src="/js/ui.js"></script>
   <script src="/js/sidebar.js"></script>
+  <script src="/js/footer-nav.js"></script>
+  <script src="/js/notifications.js"></script>
   <script>
     requireAuth();
     renderSidebar("dashboard");
+    renderFooterNav("dashboard");
+    renderNotificationBell();
 
     function initials(name) {
       if (!name) return "?";
@@ -117,6 +127,7 @@
       document.getElementById("accountNumber").textContent = u.accountNumber;
 
       if (!u.hasPin) document.getElementById("pinBanner").classList.remove("d-none");
+      if (!u.dateOfBirth) document.getElementById("profileIncompleteBanner").classList.remove("d-none");
     }
 
     async function loadQr() {

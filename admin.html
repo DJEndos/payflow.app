@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin — PayFlow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link href="/css/style.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div id="pageContent">
+    <h4 class="fw-bold mb-3">Admin</h4>
+
+    <div class="card p-4 mb-4">
+      <h5 class="fw-bold mb-3">Send notification</h5>
+      <div id="notifAlert" class="alert d-none"></div>
+      <form id="notifForm" class="row g-2">
+        <div class="col-md-4">
+          <input type="text" name="title" class="form-control" placeholder="Title" required />
+        </div>
+        <div class="col-md-6">
+          <input type="text" name="message" class="form-control" placeholder="Message" required />
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" type="submit" id="notifSubmitBtn">Broadcast</button>
+        </div>
+      </form>
+      <div class="form-text mt-1">Sends to every user — there's no targeting UI yet, this always broadcasts.</div>
+    </div>
+
+    <div class="card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Users</h5>
+        <select id="kycFilter" class="form-select form-select-sm" style="width:auto;">
+          <option value="">All statuses</option>
+          <option value="unverified">Unverified</option>
+          <option value="pending">Pending review</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Account</th>
+            <th>KYC</th>
+            <th>Balance</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+          <tr>
+            <td colspan="5" class="text-muted">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Review KYC</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="reviewModalBody">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/sidebar.js"></script>
+  <script>
+    requireAuth();
+    renderSidebar("admin");
+
+    const DOC_TYPE_LABELS = { government_id: "Government ID", proof_of_address: "Proof of address" };
+    const reviewModal = new bootstrap.Modal(document.getElementById("reviewModal"));
+
+    async function ensureAdmin() {
+      const res = await fetch(`${API_BASE_URL}/api/user/me`, { headers: authHeaders() });
+      const result = await res.json();
+      if (!result.success || !result.data.isAdmin) {
+        window.location.href = "/dashboard.html";
+      }
+    }
+
+    async function loadUsers() {
+      const status = document.getElementById("kycFilter").value;
+      const url = `${API_BASE_URL}/api/admin/users${status ? `?kycStatus=${status}` : ""}`;
+      const res = await fetch(url, { headers: authHeaders() });
+      const result = await res.json();
+      const body = document.getElementById("usersBody");
+
+      if (!result.success || !result.data.length) {
+        body.innerHTML = '<tr><td colspan="5" class="text-muted">No users found</td></tr>';
+        return;
+      }
+
+      body.innerHTML = result.data
+        .map(
+          (u) => `<tr>
+            <td>${u.fullName}${u.businessName ? `<div class="text-muted small">${u.businessName}</div>` : ""}</td>
+            <td class="mono">${u.accountNumber}</td>
+            <td><span class="status-pill ${u.kycStatus === "verified" ? "success" : u.kycStatus === "rejected" ? "failed" : "pending"}">${u.kycStatus}</span></td>
+            <td>₦${u.walletBalance.toLocaleString()}</td>
+            <td><button class="btn btn-sm btn-outline-primary" onclick="openReview('${u._id}')">Review</button></td>
+          </tr>`
+        )
+        .join("");
+    }
+
+    async function openReview(userId) {
+      reviewModal.show();
+      const body = document.getElementById("reviewModalBody");
+      body.innerHTML = "Loading...";
+
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, { headers: authHeaders() });
+      const result = await res.json();
+      if (!result.success) {
+        body.innerHTML = '<p class="text-danger">Could not load this user.</p>';
+        return;
+      }
+      const u = result.data;
+
+      const docsHtml = (u.kycDocuments || []).length
+        ? u.kycDocuments.map((d) => `<a href="${d.url}" target="_blank" class="d-block small mb-1">${DOC_TYPE_LABELS[d.type] || d.type} →</a>`).join("")
+        : '<p class="text-muted small">No documents uploaded.</p>';
+
+      body.innerHTML = `
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>${u.fullName}</strong></p>
+            <p class="text-muted small mb-1">${u.email} · ${u.phone}</p>
+            <p class="text-muted small mb-1">DOB: ${u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString() : "—"}</p>
+            <p class="text-muted small mb-1">NIN verified: ${u.ninVerified ? "✅" : "❌"}</p>
+            <p class="text-muted small mb-0">BVN verified: ${u.bvnVerified ? `✅ (${u.bvnVerifiedName || ""})` : "❌"}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="fw-semibold small mb-2">Documents</p>
+            ${docsHtml}
+          </div>
+        </div>
+        <div id="reviewAlert" class="alert d-none"></div>
+        <div class="mb-2">
+          <textarea id="rejectReason" class="form-control form-control-sm" placeholder="Rejection reason (only needed if rejecting)"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-success btn-sm flex-fill" onclick="setKycStatus('${userId}', 'verified')">Approve</button>
+          <button class="btn btn-danger btn-sm flex-fill" onclick="setKycStatus('${userId}', 'rejected')">Reject</button>
+        </div>
+      `;
+    }
+
+    async function setKycStatus(userId, status) {
+      const reason = document.getElementById("rejectReason")?.value || "";
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/kyc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ status, reason }),
+      });
+      const result = await res.json();
+      const alertBox = document.getElementById("reviewAlert");
+      if (alertBox) {
+        alertBox.textContent = result.message;
+        alertBox.className = `alert ${result.success ? "alert-success" : "alert-danger"}`;
+      }
+      if (result.success) {
+        loadUsers();
+        setTimeout(() => reviewModal.hide(), 1200);
+      }
+    }
+
+    document.getElementById("kycFilter").addEventListener("change", loadUsers);
+
+    document.getElementById("notifForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const button = document.getElementById("notifSubmitBtn");
+      const data = Object.fromEntries(new FormData(e.target));
+      const alertBox = document.getElementById("notifAlert");
+      const form = e.target;
+
+      await withButtonLoading(button, "Sending...", async () => {
+        const res = await fetch(`${API_BASE_URL}/api/admin/notifications`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        alertBox.textContent = result.message;
+        alertBox.className = `alert ${result.success ? "alert-success" : "alert-danger"}`;
+        if (result.success) form.reset();
+      });
+    });
+
+    ensureAdmin();
+    loadUsers();
+  </script>
+</body>
+
+</html>

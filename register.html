@@ -2,59 +2,217 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register — PayFlow</title>
+  <title>Create your account — PayFlow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
   <link href="/css/style.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
-    <div class="card p-4 col-md-5 w-100">
-      <div class="d-flex align-items-center gap-2 mb-3">
-     <a href="/index.html"><img src="/logo.png"  width="100"></a>
+  <div class="auth-page">
+    <div class="auth-marketing">
+      <span class="auth-badge"><i class="bi bi-shield"></i> Secure. Fast. Reliable.</span>
+      <h1 class="auth-headline">Banking made <span class="accent">simple</span> and secure</h1>
+      <p class="auth-subtext">
+        Send, receive and manage your money effortlessly. Register your business, get a
+        unique account number, and let customers pay you by scanning a code.
+      </p>
+
+      <div class="auth-feature-list">
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="bi bi-lightning-charge"></i></div>
+          <div>
+            <div class="auth-feature-title">Instant transfers</div>
+            <div class="auth-feature-desc">Send and receive money in seconds.</div>
+          </div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="bi bi-shield-lock"></i></div>
+          <div>
+            <div class="auth-feature-title">Bank-level security</div>
+            <div class="auth-feature-desc">Your data and money are protected.</div>
+          </div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="bi bi-credit-card-fill"></i></div>
+          <div>
+            <div class="auth-feature-title">Bills, airtime & data</div>
+            <div class="auth-feature-desc">Pay electricity, buy airtime and data.</div>
+          </div>
+        </div>
       </div>
-      <h4 class="fw-bold mb-3">Create your PayFlow account</h4>
-      <div id="alertBox" class="alert alert-danger d-none"></div>
-      <form id="registerForm">
-        <div class="mb-3">
-          <label class="form-label">Full name</label>
-          <input type="text" name="fullName" class="form-control" required />
+
+      <div class="auth-trust-row">
+        <span><i class="bi bi-lock-fill"></i> Bank-level encryption</span>
+        <span><i class="bi bi-check-lg"></i> Secure authentication</span>
+        <span><i class="bi bi-shield-check"></i> Protected transactions</span>
+      </div>
+    </div>
+
+    <div class="auth-form-side">
+      <div class="auth-card">
+        <div id="formView">
+          <div class="d-flex align-items-center gap-2 mb-3">
+           <img src="/logo.png" alt="" width="100">
+            <span class="brand-font fw-bold fs-5"></span>
+          </div>
+          <h2>Create your account</h2>
+          <p class="auth-card-subtext">Let's get you started with PayFlow.</p>
+
+          <div id="alertBox" class="alert alert-danger d-none"></div>
+
+          <form id="registerForm">
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="input-icon-group">
+                  <label>First name</label>
+                  <span class="input-icon"><i class="bi bi-person"></i></span>
+                  <input type="text" name="firstName" placeholder="Input  first name" autocomplete="given-name" required />
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="input-icon-group">
+                  <label>Last name</label>
+                  <span class="input-icon"><i class="bi bi-person"></i></span>
+                  <input type="text" name="lastName" placeholder="Input  last name" autocomplete="family-name" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="input-icon-group">
+              <label>Business name (optional)</label>
+              <span class="input-icon"><i class="bi bi-buildings"></i></span>
+              <input type="text" name="businessName" placeholder="Your shop or business" />
+            </div>
+
+            <div class="input-icon-group">
+              <label>Email address</label>
+              <span class="input-icon"><i class="bi bi-envelope"></i></span>
+              <input type="email" name="email" placeholder="john.doe@email.com" autocomplete="email" required />
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="input-icon-group">
+                  <label>Phone number</label>
+                  <span class="input-icon"><i class="bi bi-phone"></i></span>
+                  <input type="tel" name="phone" placeholder="08012345678" required />
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="input-icon-group">
+                  <label>Date of birth</label>
+                  <span class="input-icon"><i class="bi bi-cake"></i></span>
+                  <input type="date" name="dateOfBirth" autocomplete="bday" required style="padding-left:42px;" />
+                </div>
+              </div>
+            </div>
+            <p class="text-muted small mt-n2 mb-3">Your phone number becomes your PayFlow account number. Must be 18+.</p>
+
+            <div class="input-icon-group">
+              <label>National Identification Number (NIN)</label>
+              <span class="input-icon"><i class="bi bi-list-ol"></i></span>
+              <input type="text" name="nin" maxlength="11" pattern="\d{11}" inputmode="numeric" placeholder="11 digits" required />
+            </div>
+
+            <div class="input-icon-group mb-1">
+              <label>Password</label>
+              <span class="input-icon"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" id="passwordInput" placeholder="Create a password" autocomplete="new-password" minlength="8" required oninput="updatePasswordStrength(this.value)" />
+              <button type="button" class="toggle-password" onclick="togglePw()"><i class="bi bi-eye"></i></button>
+            </div>
+
+            <div class="pw-strength-track">
+              <div class="pw-strength-fill" id="pwStrengthFill"></div>
+            </div>
+            <div class="pw-strength-label" id="pwStrengthLabel">&nbsp;</div>
+
+            <div class="pw-requirements">
+              <div class="req" id="req-length"><span class="check">○</span> At least 8 characters</div>
+              <div class="req" id="req-upper"><span class="check">○</span> One uppercase letter</div>
+              <div class="req" id="req-number"><span class="check">○</span> One number</div>
+              <div class="req" id="req-special"><span class="check">○</span> One special character</div>
+            </div>
+
+            <button class="btn-auth-primary mt-3" type="submit" id="submitBtn">Create account →</button>
+          </form>
+
+          <div class="auth-trust-mini">
+            <span><i class="bi bi-lock-fill"></i> Bank-level encryption</span>
+            <span><i class="bi bi-shield"></i> Protected transactions</span>
+          </div>
+
+          <p class="text-center mt-4 mb-0 small">Already have an account? <a href="/login.html" style="color:var(--forest)">Log in</a></p>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Business name (optional)</label>
-          <input type="text" name="businessName" class="form-control" />
+
+        <div id="successView" class="auth-success-box d-none">
+          <div class="checkmark">✅</div>
+          <h4 class="fw-bold mt-3">Account created successfully!</h4>
+          <p class="text-muted">logging into your dashboard...</p>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Email</label>
-          <input type="email" name="email" class="form-control" required />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Phone number</label>
-          <input type="tel" name="phone" class="form-control" placeholder="08012345678" required />
-          <div class="form-text">This becomes your PayFlow account number.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Password</label>
-          <input type="password" name="password" class="form-control" minlength="6" required />
-        </div>
-        <button class="btn btn-primary w-100" type="submit">Create account</button>
-      </form>
-      <p class="text-center mt-3 mb-0">Already have an account? <a href="/login.html">Log in</a></p>
+      </div>
     </div>
   </div>
 
+  <script src="/js/splash.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/ui.js"></script>
   <script>
+    function togglePw() {
+      const input = document.getElementById("passwordInput");
+      input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function updatePasswordStrength(value) {
+      const checks = {
+        length: value.length >= 8,
+        upper: /[A-Z]/.test(value),
+        number: /[0-9]/.test(value),
+        special: /[^A-Za-z0-9]/.test(value),
+      };
+
+      Object.entries(checks).forEach(([key, met]) => {
+        const el = document.getElementById(`req-${key}`);
+        el.classList.toggle("met", met);
+        el.querySelector(".check").textContent = met ? "✓" : "○";
+      });
+
+      const score = Object.values(checks).filter(Boolean).length;
+      const fill = document.getElementById("pwStrengthFill");
+      const label = document.getElementById("pwStrengthLabel");
+
+      const levels = [
+        { width: "0%", color: "var(--line)", text: "" },
+        { width: "25%", color: "#A83232", text: "Weak" },
+        { width: "50%", color: "#C08A28", text: "Fair" },
+        { width: "75%", color: "#3E8E5A", text: "Good" },
+        { width: "100%", color: "var(--forest)", text: "Strong" },
+      ];
+      const level = value.length ? levels[score] : levels[0];
+      fill.style.width = level.width;
+      fill.style.background = level.color;
+      label.textContent = level.text;
+      label.style.color = level.color;
+    }
+
     const form = document.getElementById("registerForm");
     const alertBox = document.getElementById("alertBox");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       alertBox.classList.add("d-none");
-      const data = Object.fromEntries(new FormData(form));
-      const button = form.querySelector("button");
+      const raw = Object.fromEntries(new FormData(form));
+      const data = {
+        fullName: `${raw.firstName.trim()} ${raw.lastName.trim()}`.trim(),
+        businessName: raw.businessName,
+        email: raw.email,
+        phone: raw.phone,
+        dateOfBirth: raw.dateOfBirth,
+        nin: raw.nin,
+        password: raw.password,
+      };
+      const button = document.getElementById("submitBtn");
 
       await withButtonLoading(button, "Creating account...", async () => {
         const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -65,12 +223,15 @@
         const result = await res.json();
 
         if (!result.success) {
-          alertBox.textContent = result.message;
+          alertBox.textContent = result.message || "Something went wrong. Please try again.";
           alertBox.classList.remove("d-none");
           return;
         }
+
         setToken(result.data.token);
-        window.location.href = "/dashboard.html";
+        document.getElementById("formView").classList.add("d-none");
+        document.getElementById("successView").classList.remove("d-none");
+        setTimeout(() => (window.location.href = "/dashboard.html"), 1400);
       });
     });
   </script>

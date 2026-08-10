@@ -1,7 +1,4 @@
-// Shared auth helpers used across every page. Since the frontend and backend
-// are on different domains now (Vercel + Render), we can't rely on cookies
-// the way a same-origin app would — the JWT is stored in localStorage and
-// sent manually as an Authorization header on every API call.
+
 
 function getToken() {
   return localStorage.getItem("payflow_token");
