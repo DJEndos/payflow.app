@@ -219,9 +219,35 @@
 
     <div class="balance-card-dark">
       <div class="row-top">
-        <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()" aria-label="Show balance"><i class="bi bi-eye"></i>
-
-        </button></span>
+        <span>🛡 Available Balance <button
+    class="eye-toggle"
+    id="eyeToggleBtn"
+    onclick="toggleBalanceVisibility()"
+    aria-label="Hide balance"
+    type="button"
+>
+    <svg
+        class="eye-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+        <circle
+            cx="12"
+            cy="12"
+            r="3"
+            stroke="currentColor"
+            stroke-width="2"
+        />
+    </svg>
+</button></span>
         <a href="/wallet.html">Transaction History ›</a>
       </div>
       <div class="balance-amount-row">
@@ -284,15 +310,62 @@
     }
 
     function renderBalance() {
-      const el = document.getElementById("balanceAmount");
-      const eyeBtn = document.getElementById("eyeToggleBtn");
-      el.textContent = balanceVisible ? `₦${currentBalance.toLocaleString()}` : "₦*****";
-      eyeBtn.innerHTML = balanceVisible ? 'bi bi-eye' : 'bi bi-eye-slash';
-      eyeBtn.setAttribute("aria-label",
-      balanceVisible ? "Hide balance" : "Show balance"
+    const el = document.getElementById("balanceAmount");
+    const eyeBtn = document.getElementById("eyeToggleBtn");
 
-      );
-    }
+    el.textContent = balanceVisible
+        ? `₦${currentBalance.toLocaleString()}`
+        : "₦*****";
+
+    eyeBtn.innerHTML = balanceVisible
+        ? `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                    stroke="currentColor"
+                    stroke-width="2"
+                />
+            </svg>
+          `
+        : `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M3 3L21 21"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
+                <path
+                    d="M10.6 5.2C11.05 5.07 11.52 5 12 5C18.5 5 22 12 22 12C22 12 20.8 14.4 18.6 16.2"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
+                <path
+                    d="M6.1 7.1C3.4 9.2 2 12 2 12C2 12 5.5 19 12 19C13.5 19 14.8 18.7 16 18.2"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
+            </svg>
+          `;
+
+    eyeBtn.setAttribute(
+        "aria-label",
+        balanceVisible ? "Hide balance" : "Show balance"
+    );
+}
 
     function toggleBalanceVisibility() {
       balanceVisible = !balanceVisible;
