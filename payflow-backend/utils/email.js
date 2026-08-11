@@ -36,4 +36,28 @@ async function sendResetPasswordEmail(to, resetLink) {
   });
 }
 
-module.exports = { sendResetPasswordEmail };
+async function sendVerificationEmail(to, verifyLink) {
+  const transporter = getTransporter();
+
+  await transporter.sendMail({
+    from: `"PayFlow" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+    to,
+    subject: "Verify your PayFlow account",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
+        <h2 style="color:#0B6E4F;">Welcome to PayFlow</h2>
+        <p>Please confirm this is your email address to activate your account. This link expires in 24 hours.</p>
+        <p>
+          <a href="${verifyLink}" style="background:#0B6E4F;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;">
+            Verify my email
+          </a>
+        </p>
+        <p style="color:#888;font-size:13px;">
+          If you didn't create a PayFlow account, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}
+
+module.exports = { sendResetPasswordEmail, sendVerificationEmail };

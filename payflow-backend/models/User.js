@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema(
     businessName: { type: String, trim: true, default: "" },
     walletBalance: { type: Number, default: 0, min: 0 },
     isVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String, default: null },
+    emailVerificationExpires: { type: Date, default: null },
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
     // BVN verification: we deliberately never persist the raw BVN. Only a
@@ -24,8 +26,18 @@ const userSchema = new mongoose.Schema(
     // (customer redirected to NIBSS's portal), cleared once resolved.
     bvnConsentReference: { type: String, default: null },
 
+    // Required for NEW registrations (enforced in the register() controller,
+    // not here) - but NOT required at the schema level, because existing
+    // users registered before this feature don't have these fields, and a
+    // schema-level `required: true` would throw a ValidationError the next
+    // time ANY .save() touches their document (setting a PIN, sending a
+    // transfer, buying a bill - anything). Existing users see a "complete
+    // your profile" prompt instead of getting silently locked out.
     dateOfBirth: { type: Date, default: null },
-    
+    // NIN itself is sensitive too, but unlike BVN it's commonly required to be
+    // shown back to the user (e.g. on printed KYC forms), so we store it
+    // encrypted-at-rest by MongoDB Atlas default disk encryption rather than
+    // masking it outright. Never log it or return it in API responses.
     nin: { type: String, trim: true, default: null },
     ninVerified: { type: Boolean, default: false },
 

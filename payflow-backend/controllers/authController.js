@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
-const { sendResetPasswordEmail } = require("../utils/email");
+const { sendResetPasswordEmail, sendVerificationEmail } = require("../utils/email");
 const { initiateBvnConsent, getBvnConsentStatus } = require("../utils/flutterwave");
 
 function signToken(userId) {
@@ -15,6 +15,13 @@ function calculateAge(dob) {
   return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
 }
 
+/**
+ * Validates DOB (18+) and NIN format only. NIN is NOT verified against any
+ * vendor here — Flutterwave's BVN consent flow (see initiateBvn/checkBvnStatus
+ * below) verifies BOTH the BVN and the NIN together in one step, so there's
+ * no separate NIN-only vendor call anymore. This just stops obviously-wrong
+ * input (wrong digit count, underage) from being saved.
+ */
 function validateIdentityFormat({ dateOfBirth, nin }) {
   if (!dateOfBirth || !nin) {
     return { ok: false, status: 400, message: "Date of birth and NIN are required" };
@@ -66,6 +73,22 @@ async function register(req, res) {
       accountNumber: normalizedPhone,
     });
 
+    // Send the verification email, but never let a mail-server hiccup block
+    // registration itself — the user can request a resend from the dashboard
+    // if this fails or never arrives.
+    try {
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+      user.emailVerificationToken = hashedToken;
+      user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+      await user.save();
+
+      const verifyLink = `${process.env.FRONTEND_URL}/verify-email.html?token=${rawToken}`;
+      await sendVerificationEmail(user.email, verifyLink);
+    } catch (mailErr) {
+      console.error("Failed to send verification email (registration still succeeds):", mailErr.message);
+    }
+
     const token = signToken(user._id);
 
     return res.status(201).json({
@@ -80,6 +103,62 @@ async function register(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: "Server error during registration" });
+  }
+}
+
+// POST /api/auth/verify-email/:token
+async function verifyEmail(req, res) {
+  try {
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "This verification link is invalid or has expired." });
+    }
+
+    user.isVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    return res.json({ success: true, message: "Email verified successfully!" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+// POST /api/auth/resend-verification (protected - logged-in users only)
+async function resendVerification(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: "Your email is already verified." });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+    await user.save();
+
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email.html?token=${rawToken}`;
+
+    try {
+      await sendVerificationEmail(user.email, verifyLink);
+    } catch (mailErr) {
+      console.error("Failed to resend verification email:", mailErr.message);
+      return res.status(500).json({ success: false, message: "Could not send email right now. Try again shortly." });
+    }
+
+    return res.json({ success: true, message: "Verification email sent! Check your inbox." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
@@ -218,6 +297,7 @@ async function getMe(req, res) {
       kycRejectionReason: req.user.kycRejectionReason,
       kycDocuments: req.user.kycDocuments,
       isAdmin: req.user.isAdmin,
+      isVerified: req.user.isVerified,
     },
   });
 }
@@ -399,4 +479,6 @@ module.exports = {
   verifyBvn,
   getBvnStatus,
   completeProfile,
+  verifyEmail,
+  resendVerification,
 };
