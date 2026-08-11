@@ -1006,7 +1006,7 @@ h5,
 }
 
 .footer-nav-link .footer-nav-icon {
-  font-size: 1.5rem;
+  font-size: 1.rem;
 }
 
 .footer-nav-link.active {
@@ -1026,6 +1026,6 @@ h5,
 .nav-link{
   background: var(--forest);
   color: var(--white);
-  gap: 3px;
+  margin-right: 5px;
 }
 
