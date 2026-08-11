@@ -1025,5 +1025,7 @@ h5,
 
 .nav-link{
   background: var(--forest);
+  color: var(--white);
+  gap: 3px;
 }
 
