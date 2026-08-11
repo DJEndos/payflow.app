@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
-a{
+a {
   text-decoration: none;
   color: var(--forest);
   text-align: center;
 }
+
 :root {
   --ink: #10241C;
   --forest: #0B6E4F;
@@ -518,7 +519,8 @@ h5,
 .notif-item {
   padding: 12px 16px;
   border-bottom: 1px dashed var(--line);
-  cursor: pointer;}
+  cursor: pointer;
+}
 
 .notif-item:last-child {
   border-bottom: none;
@@ -772,7 +774,7 @@ h5,
   font-size: 0.95rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  
+
 }
 
 .input-icon-group input:focus,
@@ -806,7 +808,8 @@ h5,
   height: 6px;
   border-radius: 3px;
   background: var(--line);
-  overflow: hidden;  margin-top: 8px;
+  overflow: hidden;
+  margin-top: 8px;
 }
 
 .pw-strength-fill {
@@ -893,7 +896,7 @@ h5,
 .auth-success-box .checkmark {
   font-size: 2.6rem;
   animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
- 
+
 }
 
 @keyframes pop-in {
@@ -947,8 +950,9 @@ h5,
 }
 
 .splash-loader-logo {
-  display: flex;
+  display: inline;
   align-items: center;
+  text-align: center;
   gap: 14px;
   animation: splash-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -957,13 +961,22 @@ h5,
   width: 150px;
   height: 100px;
   border-radius: 15px;
+  margin-bottom: 15px;
 }
 
-.splash-loader-logo span {
+.splash-loader-logo h1 {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 800;
-  font-size: 2.2rem;
-  color: var(--forest);
+  font-weight: 600;
+  font-size: 2rem;
+  color: var(--white);
+}
+
+.splash-loader-logo .accent {
+  background: var(--paper);
+  color: var(--forest-dark);
+  border-radius: 40ch;
+  padding: 4px;
+  font-size: 1.5rem;
 }
 
 @keyframes splash-pop {
@@ -1019,43 +1032,48 @@ h5,
   padding-bottom: 76px;
 }
 
-.nav-item{
+.nav-item {
   color: var(--forest);
 }
 
-.nav-link{
+.nav-link {
   background: var(--forest);
   color: var(--white);
   margin-right: 10px;
 }
+
 .eye-toggle {
-    background: transparent;
-    border: none;
-    padding: 6px;
-    margin-left: 8px;
-    cursor: pointer;
-    color: #063b2b;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  margin-left: 8px;
+  cursor: pointer;
+  color: #063b2b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
 }
 
 .eye-icon {
-    width: 21px;
-    height: 21px;
-    display: block;
+  width: 21px;
+  height: 21px;
+  display: block;
 }
 
 .eye-toggle:hover {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .eye-toggle:active {
-    transform: scale(0.92);
+  transform: scale(0.92);
 }
 
-.row-top{
+.row-top {
+  display: flex;
   justify-content: center;
+  justify-content: space-between;
   align-items: center;
   font-weight: 700;
 }

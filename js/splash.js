@@ -6,7 +6,10 @@ function showSplashLoader() {
   el.innerHTML = `
     <div class="splash-loader-logo">
       <img src="/logo.png" alt="PayFlow"/>
+      <br>
+      <h1 class="">Banking made <span class="accent">simple</span> and secure.</h1>
     </div>
+     
   `;
   document.body.insertAdjacentElement("afterbegin", el);
 }
