@@ -285,7 +285,7 @@
     function renderBalance() {
       const el = document.getElementById("balanceAmount");
       el.textContent = balanceVisible ? `₦${currentBalance.toLocaleString()}` : "₦*****";
-      document.getElementById("eyeToggleBtn").textContent = balanceVisible ? "bi bi-eye" : "bi bi-eye-slash";
+      document.getElementById("eyeToggleBtn").textContent = balanceVisible ? "" : "";
     }
 
     function toggleBalanceVisibility() {
