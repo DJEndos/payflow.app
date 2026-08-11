@@ -1028,4 +1028,13 @@ h5,
   color: var(--white);
   margin-right: 10px;
 }
-
+.eyeToggle{
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

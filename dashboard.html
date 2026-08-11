@@ -219,8 +219,9 @@
 
     <div class="balance-card-dark">
       <div class="row-top">
-        <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()"><i
-              class="bi bi-eye"></i></button></span>
+        <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()" aria-label="Show balance"><i class="bi bi-eye"></i>
+
+        </button></span>
         <a href="/wallet.html">Transaction History ›</a>
       </div>
       <div class="balance-amount-row">
@@ -284,8 +285,13 @@
 
     function renderBalance() {
       const el = document.getElementById("balanceAmount");
+      const eyeBtn = document.getElementById("eyeToggleBtn");
       el.textContent = balanceVisible ? `₦${currentBalance.toLocaleString()}` : "₦*****";
-      document.getElementById("eyeToggleBtn").textContent = balanceVisible ? "" : "";
+      eyeBtn.innerHTML = balanceVisible ? 'bi bi-eye' : 'bi bi-eye-slash';
+      eyeBtn.setAttribute("aria-label",
+      balanceVisible ? "Hide balance" : "Show balance"
+
+      );
     }
 
     function toggleBalanceVisibility() {
