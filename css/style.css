@@ -1011,6 +1011,7 @@ h5,
 
 .footer-nav-link.active {
   color: var(--forest);
+  font-size: 1.5rem;
 }
 
 /* Push page content up so the fixed footer never overlaps it */
@@ -1022,4 +1023,7 @@ h5,
   color: var(--forest);
 }
 
-/* new dashboard CSS */
+.nav-link{
+  background: var(--forest);
+}
+
