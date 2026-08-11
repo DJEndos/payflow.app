@@ -22,9 +22,9 @@
     .dark-icon-btn {
       width: 38px; height: 38px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.08);
+      background: #fff;
       border: none;
-      color: #fff;
+      color: #0B1F16;
       font-size: 1.05rem;
       display: flex; align-items: center; justify-content: center;
       text-decoration: none;
@@ -55,7 +55,7 @@
     }
 
     .quick-actions-dark {
-      background: #17171A;
+      background: #fff;
       border-radius: 18px;
       padding: 20px;
       display: flex;
@@ -64,7 +64,7 @@
     }
     .quick-action-dark {
       display: flex; flex-direction: column; align-items: center; gap: 8px;
-      color: #E4E4E7; text-decoration: none; font-size: 0.8rem; font-weight: 500;
+      color: #17171A; text-decoration: none; font-size: 0.8rem; font-weight: 500;
     }
     .quick-action-dark .icon-circle {
       width: 44px; height: 44px;
@@ -76,11 +76,11 @@
     }
 
     .ledger-dark {
-      background: #17171A;
+      background: #E4E4E7;
       border-radius: 18px;
       overflow: hidden;
     }
-    .ledger-dark .ledger-header { background: transparent; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .ledger-dark .ledger-header { background: transparent; color: #E4E4E7; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .ledger-dark .ledger-row { border-bottom: 1px dashed rgba(255,255,255,0.08); color: #E4E4E7; }
     .ledger-dark .tx-date { color: #8A8A8E; }
   </style>
@@ -116,7 +116,7 @@
 
     <div class="balance-card-dark">
       <div class="row-top">
-        <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()">👁</button></span>
+        <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()"><i class="bi bi-eye"></i></button></span>
         <a href="/wallet.html">Transaction History ›</a>
       </div>
       <div class="balance-amount-row">
