@@ -1043,17 +1043,18 @@ h5,
 }
 
 .eye-toggle {
-  display: flex;
+  display: inline-flex;
   background: transparent;
   border: none;
-  padding: 6px;
+  padding: 0;
+  margin: 0;
   margin-left: 8px;
   cursor: pointer;
   color: #063b2b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  
+
 }
 
 .eye-icon {
@@ -1075,5 +1076,10 @@ h5,
   justify-content: center;
   justify-content: space-between;
   align-items: center;
-  font-weight: 700;
+  width: 100%;
+}
+.balance-items{
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
