@@ -10,15 +10,16 @@
   <link href="/css/style.css" rel="stylesheet" />
   <style>
     :root {
-  --ink: #10241C;
-  --forest: #0B6E4F;
-  --forest-dark: #08543C;
-  --gold: #C08A28;
-  --paper: #F7F5EF;
-  --line: #D8D2C4;
-  --muted: #6B7A72;
-  --white: #fff;
-}
+      --ink: #10241C;
+      --forest: #0B6E4F;
+      --forest-dark: #08543C;
+      --gold: #C08A28;
+      --paper: #F7F5EF;
+      --line: #D8D2C4;
+      --muted: #6B7A72;
+      --white: #fff;
+    }
+
     .main-content {
       background: #fff;
     }
@@ -219,44 +220,25 @@
 
     <div class="balance-card-dark">
       <div class="row-top">
-        <span>🛡 Available Balance <button
-    class="eye-toggle"
-    id="eyeToggleBtn"
-    onclick="toggleBalanceVisibility()"
-    aria-label="Hide balance"
-    type="button"
->
-    <svg
-        class="eye-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-    >
-        <path
-            d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        />
-        <circle
-            cx="12"
-            cy="12"
-            r="3"
-            stroke="currentColor"
-            stroke-width="2"
-        />
-    </svg>
-</button></span>
+        <div class="balance-items">
+          <span>🛡 Available Balance <button class="eye-toggle" id="eyeToggleBtn" onclick="toggleBalanceVisibility()"
+            aria-label="Hide balance" type="button">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </button></span>
+        </div>
         <a href="/wallet.html">Transaction History ›</a>
       </div>
       <div class="balance-amount-row">
         <span class="balance-amount" id="balanceAmount">₦••••</span>
         <a href="/wallet.html" class="add-money-btn">+ Add Money</a>
       </div>
-    </div>
+     </div>
 
-    <div class="quick-actions-dark">
+     <div class="quick-actions-dark">
       <a href="/wallet.html" class="quick-action-dark"><span class="icon-circle"><i
             class="bi bi-wallet-fill"></i></span>Send Money</a>
       <a href="/wallet.html" class="quick-action-dark"><span class="icon-circle"><i class="bi bi-bank"></i></span>To
@@ -271,7 +253,7 @@
         <a href="/wallet.html" class="small text-decoration-none" style="color:var(--forest)">View all</a>
       </div>
       <div id="ledgerBody">
-        <div class="ledger-row text-muted">Loading...</div>
+        <div class="ledger-row">Loading...</div>
       </div>
     </div>
   </div>
@@ -310,14 +292,14 @@
     }
 
     function renderBalance() {
-    const el = document.getElementById("balanceAmount");
-    const eyeBtn = document.getElementById("eyeToggleBtn");
+      const el = document.getElementById("balanceAmount");
+      const eyeBtn = document.getElementById("eyeToggleBtn");
 
-    el.textContent = balanceVisible
+      el.textContent = balanceVisible
         ? `₦${currentBalance.toLocaleString()}`
         : "₦*****";
 
-    eyeBtn.innerHTML = balanceVisible
+      eyeBtn.innerHTML = balanceVisible
         ? `
             <svg class="eye-icon" viewBox="0 0 24 24" fill="none"
                 xmlns="http://www.w3.org/2000/svg">
@@ -361,11 +343,11 @@
             </svg>
           `;
 
-    eyeBtn.setAttribute(
+      eyeBtn.setAttribute(
         "aria-label",
         balanceVisible ? "Hide balance" : "Show balance"
-    );
-}
+      );
+    }
 
     function toggleBalanceVisibility() {
       balanceVisible = !balanceVisible;
