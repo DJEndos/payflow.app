@@ -1006,12 +1006,12 @@ h5,
 }
 
 .footer-nav-link .footer-nav-icon {
-  font-size: 1.rem;
+  font-size: 1.5rem;
 }
 
 .footer-nav-link.active {
   color: var(--forest);
-  font-size: 1.5rem;
+  font-size: 1rem;
 }
 
 /* Push page content up so the fixed footer never overlaps it */
@@ -1026,6 +1026,6 @@ h5,
 .nav-link{
   background: var(--forest);
   color: var(--white);
-  margin-right: 5px;
+  margin-right: 10px;
 }
 
