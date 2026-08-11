@@ -1053,3 +1053,9 @@ h5,
 .eye-toggle:active {
     transform: scale(0.92);
 }
+
+.row-top{
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
